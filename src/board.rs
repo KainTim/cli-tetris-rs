@@ -56,6 +56,8 @@ impl Board {
         stdout().flush().unwrap();
     }
     pub fn set_block(&mut self, row:i32, column:i32, color:BoardColor){
+        if !(row>=0 && row <self.rows) { return; }
+        if !(column>=0 && column <self.columns) { return; }
         assert!(row>=0 && row <self.rows, "Row isn't in bounds");
         assert!(column>=0 && column <self.columns, "Column isn't in bounds");
         let column:usize = column as usize;

@@ -3,14 +3,16 @@ mod board;
 mod color;
 mod game_logic;
 mod input;
+mod piece;
+mod rotation;
 
 use crate::game_logic::GameLogic;
 use crate::input::handle_input;
 use block::Block;
 use board::Board;
-use crossterm::QueueableCommand;
+use crossterm::{execute, QueueableCommand};
 use crossterm::cursor::{MoveTo, MoveToNextLine};
-use crossterm::event::poll;
+use crossterm::event::{poll, DisableMouseCapture};
 use crossterm::terminal::ClearType::All;
 use crossterm::terminal::{
     Clear, EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
@@ -21,12 +23,13 @@ use std::io::{Write, stdout};
 use std::process::exit;
 use std::thread;
 use std::time::{Duration, Instant};
+use crate::color::BoardColor::Red;
+use crate::piece::Piece;
 
 fn main() {
     init();
-    let mut logic: GameLogic = GameLogic::new(Board::new());
+    let mut logic: GameLogic = GameLogic::new(Board::new(), Piece::new([(0,0),(1,0),(2,0),(3,0)],"I-Piece",Red));
     let mut last_moved_down_time: Instant = Instant::now();
-
     loop {
         if poll(Duration::from_millis(20)).unwrap() {
             handle_input(&mut logic);
@@ -34,14 +37,14 @@ fn main() {
                 logic.move_down();
                 last_moved_down_time = Instant::now();
             }
-            // logic.print();
+            logic.print();
             continue;
         }
         if last_moved_down_time.elapsed().as_millis() > 800 {
             logic.move_down();
             last_moved_down_time = Instant::now();
         }
-        // logic.print();
+        logic.print();
         stdout().flush().unwrap()
     }
 }
@@ -72,15 +75,5 @@ fn shutdown() {
 }
 fn init() {
     stdout().queue(EnterAlternateScreen).unwrap();
-    // enable_raw_mode().unwrap();
-    let mut signals = Signals::new([SIGINT]).unwrap();
-    thread::spawn(move || {
-        println_str("Signal");
-        stdout().flush().unwrap();
-        for sig in signals.forever() {
-            println_str("Signal");
-            stdout().flush().unwrap();
-            exit(1);
-        }
-    });
+    enable_raw_mode().unwrap();
 }
